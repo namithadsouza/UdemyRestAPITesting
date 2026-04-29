@@ -8,6 +8,7 @@ import io.cucumber.junit.CucumberOptions;
 @CucumberOptions(
         features = "src/test/resources/features",
         glue = {"stepdefs", "config"},
+        //tags = "@namitha",
         plugin = {"pretty", "html:target/cucumber-reports"}
 )
 public class TestRunner {
