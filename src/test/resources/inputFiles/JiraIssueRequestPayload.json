@@ -1,0 +1,26 @@
+{
+  "fields": {
+    "project": {
+      "key": "SCRUM"
+    },
+    "issuetype": {
+      "name": "Bug"
+    },
+    "summary": "ESP Automation | Unauthorized user is able to view basket details screen",
+    "description": {
+      "type": "doc",
+      "version": 1,
+      "content": [
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "text": "This is a test issue created using Java Rest Assured and Jira REST API.",
+              "type": "text"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
