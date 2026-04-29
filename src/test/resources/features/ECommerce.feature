@@ -1,5 +1,4 @@
 Feature: E2E Validation of ecommerce website
-  Login API -> Create Product -> Purchase Order on created Product -> Delete order -> Delete Product
 
   Scenario: ecommerce website "https://rahulshettyacademy.com/client/"
     Given user is logged in
