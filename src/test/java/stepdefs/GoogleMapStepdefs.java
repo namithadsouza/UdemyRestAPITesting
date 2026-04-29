@@ -2,17 +2,25 @@ package stepdefs;
 
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
+import io.restassured.RestAssured;
+import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.builder.ResponseSpecBuilder;
+import io.restassured.http.ContentType;
 import io.restassured.path.json.JsonPath;
+import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
+import io.restassured.specification.ResponseSpecification;
 import org.example.context.ScenarioContext;
+import org.example.pojo.GooglePlace;
+import org.example.pojo.Location;
 import org.example.util.JsonUtil;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import org.junit.Assert;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
 
 import static io.restassured.RestAssured.*;
 import static org.hamcrest.Matchers.*;
@@ -22,28 +30,38 @@ public class GoogleMapStepdefs {
     @Autowired
     private ScenarioContext scenarioContext;
 
+    RequestSpecification requestSpec = new RequestSpecBuilder()
+            .setBaseUri("https://rahulshettyacademy.com")
+            .addQueryParam("key", "qaclick123")
+            .setContentType(ContentType.JSON).build();
+
+
+    ResponseSpecification responseSpec= new ResponseSpecBuilder()
+            .expectStatusCode(200).build();
+
     @Given("validate the Add Place API of google maps")
-    public void validateTheAddPlaceAPIOfGoogleMaps() {
-        JSONObject jsonObject;
-        JSONParser parser = new JSONParser();
-
-        try {
-            Object obj = parser.parse(new FileReader("src/test/resources/inputFiles/GooglePlaceRequestData.json"));
-            jsonObject = (JSONObject) obj;
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        }
-
+    public void validateTheAddPlaceAPIOfGoogleMaps() throws IOException {
+        GooglePlace googlePlace= new GooglePlace();
+        Location location= new Location();
+        location.setLat(-35);
+        location.setLng(12.1);
+        googlePlace.setLocation(location);
+        googlePlace.setAccuracy(1);
+        googlePlace.setAddress("Mangalore");
+        googlePlace.setName("namitha");
+        googlePlace.setPhone_number("123456789");
+        googlePlace.setWebsite("http://google.com");
+        googlePlace.setLanguage("French-IN");
+        googlePlace.setTypes(List.of("park", "shoe"));
+       //String googlePlace = new String(Files.readAllBytes(Path.of("src/test/resources/inputFiles/GooglePlaceRequestData.json")));
         //given() - input details(query params, headers, body)
         //when() - actual resource and http method
-        //then() - assetions
+        //then() - assertions
+        /*
         baseURI = "https://rahulshettyacademy.com";
         String response = given().log().all().queryParam("key", "qaclick123")
                 .header("Content-Type", "application/json")
-                .body(jsonObject.toJSONString())
+                .body(googlePlace)
                 .when().post("maps/api/place/add/json")
                 .then().log().all()
                 .assertThat()
@@ -53,6 +71,17 @@ public class GoogleMapStepdefs {
                 .extract().response().asString();
         System.out.println(response);
         JsonPath jsonPath = JsonUtil.rawStringToJson(response);
+        String placeId = jsonPath.get("place_id");
+        Assert.assertNotNull("Place Id value should not be null", placeId);
+        System.out.println(placeId);
+        scenarioContext.setData("place_id", placeId);
+        */
+        RequestSpecification request = given().spec(requestSpec).body(googlePlace);
+        Response response=request.when().post("maps/api/place/add/json")
+                .then()
+                .spec(responseSpec).log().all()
+                .extract().response();
+        JsonPath jsonPath = response.jsonPath();
         String placeId = jsonPath.get("place_id");
         Assert.assertNotNull("Place Id value should not be null", placeId);
         System.out.println(placeId);
