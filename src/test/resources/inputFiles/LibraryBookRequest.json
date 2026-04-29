@@ -1,0 +1,6 @@
+{
+  "name":"Example book",
+  "isbn":"sampleStr",
+  "aisle":"sampleNum",
+  "author":"Name"
+}
