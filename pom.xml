@@ -29,6 +29,7 @@
             <artifactId>cucumber-java</artifactId>
             <version>7.34.2</version>
         </dependency>
+        <!--To run cucumber testcases we can use either junit or testng-->
         <dependency>
             <groupId>io.cucumber</groupId>
             <artifactId>cucumber-junit</artifactId>
