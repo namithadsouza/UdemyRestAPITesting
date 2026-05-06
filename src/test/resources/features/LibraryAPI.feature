@@ -1,16 +1,10 @@
 Feature: Library API Testing with Rest Assured
 
-  @namitha
-  Scenario: Library API - Add book
-    Given books are added with details
-
-  #@namitha
   Scenario Outline: Delete existing books if present for <author>
     Given books are deleted for "<author>"
     Examples:
       | author        |
       | NamithaDsouza |
-
 
   Scenario Outline: Library API - Add book <name>
     Given books are added with details "<name>" "<isbn>" "<aisle>" "<author>"

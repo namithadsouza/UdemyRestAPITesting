@@ -1,6 +1,5 @@
 package stepdefs;
 
-import io.cucumber.java.PendingException;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.But;
 import io.cucumber.java.en.Given;
@@ -9,16 +8,14 @@ import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.example.context.ScenarioContext;
-import org.example.pojo.AddBookResponse;
-import org.example.pojo.BookByAuthor;
-import org.example.pojo.BookDeleteById;
-import org.example.pojo.LibraryBook;
+import org.example.pojo.*;
 import org.junit.Assert;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 
 import static io.restassured.RestAssured.*;
@@ -28,15 +25,15 @@ public class LibraryStepdefs {
     @Autowired
     private ScenarioContext scenarioContext;
 
-    private final String baseURL = "https://rahulshettyacademy.com/";
-    //or use //http://216.10.245.166/
+    private final String baseURL = "http://216.10.245.166/";
+    //or use //http://216.10.245.166/ or https://rahulshettyacademy.com/
 
     @Given("books are added with details {string} {string} {string} {string}")
     public void booksAreAddedWithDetails(String name, String isbn, String aisle, String author) {
-        LibraryBook libraryBook = new LibraryBook();
+        Book libraryBook = new Book();
         libraryBook.setName(name);
         libraryBook.setIsbn(isbn);
-        libraryBook.setIsle(aisle);
+        libraryBook.setAisle(aisle);
         libraryBook.setAuthor(author);
         //http://216.10.245.166/Library/Addbook.php
         //method = POST
@@ -69,16 +66,15 @@ public class LibraryStepdefs {
                 .setBaseUri(baseURL)
                 .addQueryParam("AuthorName", authorName);
         Response response = given().spec(addBookRequestBuilder.build())
-                .when().get("GetBook.php")
+                .when().get("/Library/GetBook.php")
                 .then().extract().response();
-        System.out.println("all books by author " + response.getBody().asString());
         if (response.statusCode() != 200) {
             System.out.println(" status code is " + response.statusCode());
-            System.out.println("Response is " + response.getBody());
+            System.out.println("Response is " + response.getBody().asString());
         } else {
             System.out.println("all books by author " + response.getBody().asString());
             try {
-                List<BookByAuthor> books = response.jsonPath().getList("", BookByAuthor.class);
+                BookByAuthor[] books = response.as(BookByAuthor[].class);
                 for (BookByAuthor book : books) {
                     String bookId = book.getIsbn() + book.getAisle();
                     //http://216.10.245.166/Library/DeleteBook.php
@@ -89,7 +85,7 @@ public class LibraryStepdefs {
                             .setContentType(ContentType.JSON)
                             .setBody(deleteBook);
                     Response deleteBookResponse = given().spec(deleteBookRequestBuilder.build())
-                            .when().delete("DeleteBook.php")
+                            .when().delete("/Library/DeleteBook.php")
                             .then().extract().response();
                     Assert.assertEquals("delete response ", 200, deleteBookResponse.getStatusCode());
                 }
@@ -109,17 +105,27 @@ public class LibraryStepdefs {
                 .setBaseUri(baseURL)
                 .addQueryParam("ID", bookId);
         Response getBookResponse = given().spec(getBookRequestBuilder.build())
-                .when().get("GetBook.php")
+                .when().get("/Library/GetBook.php")
                 .then().extract().response();
-        LibraryBook book = getBookResponse.jsonPath().getList("", LibraryBook.class).getFirst();
+        String responseBody = getBookResponse.getBody().asString();
+        if (responseBody.trim().isEmpty()) {
+            throw new RuntimeException("API returned empty response body");
+        }
+        BookResponse book;
+        try {
+            BookResponse[] books = getBookResponse.as(BookResponse[].class);
+            book = Arrays.stream(books).findFirst().get();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse response as AddBookResponse: " + e.getMessage(), e);
+        }
         scenarioContext.setData("BookById", book);
 
     }
 
     @And("validate book name is {string} and author is {string}")
     public void validateBookNameIsAndAuthorIs(String name, String author) {
-        LibraryBook book = (LibraryBook) scenarioContext.getData("BookById");
-        Assert.assertEquals(" book name comparison ", name, book.getName());
+        BookResponse book = (BookResponse) scenarioContext.getData("BookById");
+        Assert.assertEquals(" book name comparison ", name, book.getBook_name());
         Assert.assertEquals(" author name comparison ", author, book.getAuthor());
     }
 
@@ -137,26 +143,7 @@ public class LibraryStepdefs {
 
     @But("response should not be {int}")
     public void responseShouldNotBe(int statusCode) {
-        int addBookResponseCode = (int) scenarioContext.getData("responseCode");
+        int addBookResponseCode = (int) scenarioContext.getData("addBookResponseCode");
         Assert.assertNotEquals("response code comparison", statusCode, addBookResponseCode);
-    }
-
-    @Given("books are added with details")
-    public void booksAreAddedWithDetails() throws IOException {
-        String inputPayload = new String(Files.readAllBytes(Path.of("src/test/resources/inputFiles/book.json")));
-        RequestSpecBuilder addBookRequestBuilder = new RequestSpecBuilder()
-                .setBaseUri(baseURL)
-                .setContentType(ContentType.JSON)
-                .setBody(inputPayload);
-        Response response = given().spec(addBookRequestBuilder.build())
-                .when().post("/Library/Addbook.php")
-                .then().extract().response();
-        String responseBody = response.getBody().asString();
-        if (responseBody.trim().isEmpty()) {
-            throw new RuntimeException("API returned empty response body");
-        }
-        else {
-           System.out.println("api is "+responseBody);
-        }
     }
 }
