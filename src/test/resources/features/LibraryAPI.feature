@@ -1,3 +1,4 @@
+@Library
 Feature: Library API Testing with Rest Assured
 
   Scenario Outline: Delete existing books if present for <author>

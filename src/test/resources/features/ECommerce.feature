@@ -1,5 +1,6 @@
 Feature: E2E Validation of ecommerce website
 
+  @Ecommerce
   Scenario: ecommerce website "https://rahulshettyacademy.com/client/"
     Given user is logged in
     And adds the product
