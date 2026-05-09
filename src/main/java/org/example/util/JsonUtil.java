@@ -10,7 +10,7 @@ public class JsonUtil {
 
     public static String getJsonPathValue(Response response, String key) {
         String resp = response.asString();
-        JsonPath js = new JsonPath(resp);
+        JsonPath js = rawStringToJson(resp);
         return js.get(key).toString();
     }
 
