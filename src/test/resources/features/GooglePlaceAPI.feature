@@ -1,3 +1,4 @@
+@GooglePlace
 Feature: API Testing with Rest Assured
 
   Scenario: Google Maps Add API

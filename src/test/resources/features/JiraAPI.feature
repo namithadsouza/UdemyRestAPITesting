@@ -1,3 +1,4 @@
+@Jira
 Feature: Using Jira API to add attachment
 
 

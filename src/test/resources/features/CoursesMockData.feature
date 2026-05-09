@@ -1,3 +1,4 @@
+@MockAPI
 Feature: Mocking API Response
 
 #  1. Print No of courses returned by API
