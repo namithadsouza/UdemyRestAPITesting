@@ -1,0 +1,54 @@
+# azure-pipelines.yml
+# Scheduled pipeline to run Cucumber/RestAssured API tests every Monday at 9:00 AM
+
+trigger: none
+pr: none
+
+schedules:
+- cron: "0 9 * * 1"          # 9:00 AM UTC every Monday 
+  displayName: "Weekly Monday 9 AM run"
+  branches:
+    include:
+      - main
+  always: true                # run even if no new commits since last run
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  MAVEN_CACHE_FOLDER: $(Pipeline.Workspace)/.m2/repository
+  MAVEN_OPTS: '-Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
+
+steps:
+- task: Cache@2
+  inputs:
+    key: 'maven | "$(Agent.OS)" | pom.xml'
+    restoreKeys: |
+      maven | "$(Agent.OS)"
+    path: $(MAVEN_CACHE_FOLDER)
+  displayName: 'Cache Maven local repo'
+
+- task: JavaToolInstaller@0
+  inputs:
+    versionSpec: '25'
+    jdkArchitectureOption: 'x64'
+    jdkSourceOption: 'PreInstalled'
+
+- task: Maven@4
+  displayName: 'Run Cucumber API tests + generate report'
+  inputs:
+    mavenPomFile: 'pom.xml'
+    goals: 'verify'             # 'verify' (not 'test') so the cucumber-reporting plugin runs too
+    options: '$(MAVEN_OPTS)'
+    publishJUnitResults: true
+    testResultsFiles: '**/surefire-reports/TEST-*.xml'
+    javaHomeOption: 'JDKVersion'
+    mavenVersionOption: 'Default'
+
+- task: PublishBuildArtifacts@1
+  condition: succeededOrFailed()
+  displayName: 'Publish Cucumber HTML report'
+  inputs:
+    PathtoPublish: 'target/cucumber-reports'
+    ArtifactName: 'cucumber-report'
+    publishLocation: 'Container'
