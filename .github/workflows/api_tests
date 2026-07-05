@@ -1,0 +1,39 @@
+name: Weekly API Test Run
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'   # 9:00 AM UTC every Monday — adjust for your timezone
+  workflow_dispatch:        # lets you trigger it manually too, from the Actions tab
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Run Cucumber API tests + generate report
+        run: mvn -B verify   # 'verify' so the cucumber-reporting plugin also runs
+
+      - name: Publish JUnit test results
+        uses: dorny/test-reporter@v1
+        if: success() || failure()
+        with:
+          name: Cucumber JUnit Results
+          path: '**/surefire-reports/TEST-*.xml'
+          reporter: java-junit
+
+      - name: Upload Cucumber HTML report
+        if: success() || failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cucumber-report
+          path: target/cucumber-reports/
